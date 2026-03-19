@@ -6,3 +6,7 @@ dist/
 build/
 
 *.idea/
+
+.env
+.venv/
+venv/
