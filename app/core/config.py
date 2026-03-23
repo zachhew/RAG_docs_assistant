@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     app_name: str = "RAG Docs Assistant"
 
     raw_data_dir: Path = BASE_DIR / "data" / "raw"
+    processed_chunks_path: Path = BASE_DIR / "data" / "processed" / "chunks.json"
 
     qdrant_url: str = "http://localhost:6333"
     collection_name: str = "docs_collection"
@@ -29,6 +30,7 @@ class Settings(BaseSettings):
     chunk_overlap: int = 120
     llm_max_tokens: int = 1000
     retrieval_fetch_k: int = 10
+    bm25_fetch_k: int = 10
     reranker_min_score: float = 0.2
 
     supported_extensions: tuple[str, ...] = (".md", ".txt")
