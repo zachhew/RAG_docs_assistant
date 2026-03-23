@@ -23,6 +23,10 @@ class Settings(BaseSettings):
     llm_api_key: str | None = None
     llm_model_name: str = "openai/gpt-4o-mini"
 
+    query_rewriter_model_name: str = "openai/gpt-4o-mini"
+    enable_query_rewriting: bool = False
+    query_rewriting_min_words: int = 5
+
     reranker_model_name: str = "BAAI/bge-reranker-base" #временно?
     reranker_device: str = "cpu"
 
