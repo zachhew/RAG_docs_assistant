@@ -4,19 +4,16 @@ from app.core.config import settings
 from app.llm.client import get_llm
 from app.pipeline.prompt_builder import build_prompt
 from app.pipeline.response_builder import build_citations
+from app.retrieval.hybrid import hybrid_retrieve
 from app.retrieval.reranker import rerank_documents
-from app.retrieval.retriever import get_retriever
 
 logger = logging.getLogger(__name__)
 
 
 def run_rag_pipeline(question: str, top_k: int = 5):
-    fetch_k = max(top_k, settings.retrieval_fetch_k)
+    retrieved_documents = hybrid_retrieve(question=question, top_k=top_k)
 
-    retriever = get_retriever(k=fetch_k)
-    retrieved_documents = retriever.invoke(question)
-
-    logger.info("Retrieved %s documents for question=%r", len(retrieved_documents), question)
+    logger.info("Hybrid retrieved %s documents for question=%r", len(retrieved_documents), question)
 
     for i, doc in enumerate(retrieved_documents, start=1):
         preview = " ".join(doc.page_content[:120].split())

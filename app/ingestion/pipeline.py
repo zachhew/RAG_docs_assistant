@@ -5,6 +5,7 @@ from app.ingestion.loader import load_documents
 from app.ingestion.cleaner import clean_documents
 from app.ingestion.chunker import split_documents
 from app.ingestion.metadata import enrich_metadata
+from app.ingestion.storage import save_chunks
 from app.retrieval.embeddings import get_embeddings
 from app.retrieval.vector_store import recreate_vector_store
 
@@ -28,6 +29,9 @@ def run_ingestion(data_dir: str | Path | None = None) -> int:
     if enriched_chunks:
         sample = enriched_chunks[0]
         logger.info("Sample chunk metadata: %s", sample.metadata)
+
+    save_chunks(enriched_chunks)
+    logger.info("Saved processed chunks to %s", data_dir if data_dir else "processed store")
 
     embeddings = get_embeddings()
     recreate_vector_store(enriched_chunks, embeddings)

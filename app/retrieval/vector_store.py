@@ -1,24 +1,11 @@
 from langchain_qdrant import QdrantVectorStore
-from qdrant_client import QdrantClient
 
 from app.core.config import settings
 
-
-def get_qdrant_client() -> QdrantClient:
-    return QdrantClient(
-        url=settings.qdrant_url,
-    )
+_vector_store = None
 
 
 def recreate_vector_store(documents, embeddings) -> QdrantVectorStore:
-    client = get_qdrant_client()
-
-    collections = client.get_collections().collections
-    collection_names = {collection.name for collection in collections}
-
-    if settings.collection_name in collection_names:
-        client.delete_collection(settings.collection_name)
-
     return QdrantVectorStore.from_documents(
         documents=documents,
         embedding=embeddings,
@@ -29,8 +16,13 @@ def recreate_vector_store(documents, embeddings) -> QdrantVectorStore:
 
 
 def load_vector_store(embeddings) -> QdrantVectorStore:
-    return QdrantVectorStore.from_existing_collection(
-        embedding=embeddings,
-        url=settings.qdrant_url,
-        collection_name=settings.collection_name,
-    )
+    global _vector_store
+
+    if _vector_store is None:
+        _vector_store = QdrantVectorStore.from_existing_collection(
+            embedding=embeddings,
+            url=settings.qdrant_url,
+            collection_name=settings.collection_name,
+        )
+
+    return _vector_store
