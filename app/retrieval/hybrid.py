@@ -16,7 +16,6 @@ def hybrid_retrieve(question: str, top_k: int):
 
     dense_retriever = get_retriever(k=dense_k)
     bm25_retriever = get_bm25_retriever()
-
     bm25_retriever.k = bm25_k
 
     dense_docs = dense_retriever.invoke(question)
@@ -25,5 +24,16 @@ def hybrid_retrieve(question: str, top_k: int):
     merged = {}
     for doc in dense_docs + bm25_docs:
         merged[_doc_key(doc)] = doc
+
+    return list(merged.values())
+
+
+def hybrid_retrieve_multi(queries: list[str], top_k: int):
+    merged = {}
+
+    for query in queries:
+        docs = hybrid_retrieve(query, top_k=top_k)
+        for doc in docs:
+            merged[_doc_key(doc)] = doc
 
     return list(merged.values())

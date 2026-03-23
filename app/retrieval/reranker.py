@@ -28,7 +28,7 @@ def rerank_documents(
 
     reranker = get_reranker()
     pairs = [(question, doc.page_content) for doc in documents]
-    scores = reranker.predict(pairs)
+    scores = reranker.predict(pairs, show_progress_bar=False)
 
     scored_docs = []
     for doc, score in zip(documents, scores):
@@ -51,4 +51,5 @@ def rerank_documents(
     if filtered_docs:
         return filtered_docs[:top_k]
 
-    return scored_docs[:top_k]
+    fallback_k = min(2, len(scored_docs))
+    return scored_docs[:fallback_k]
