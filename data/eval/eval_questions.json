@@ -1,0 +1,38 @@
+[
+  {
+    "id": "q1",
+    "question": "What metadata does each chunk contain?",
+    "expected_sources": ["ingestion.md", "vector_store.md"],
+    "expected_keywords": ["chunk_id", "source", "title", "url"]
+  },
+  {
+    "id": "q2",
+    "question": "What is reranking used for?",
+    "expected_sources": ["retrieval.md"],
+    "expected_keywords": ["retrieval", "reranks", "best chunks", "language model"]
+  },
+  {
+    "id": "q3",
+    "question": "What does the API response contain?",
+    "expected_sources": ["api.md"],
+    "expected_keywords": ["answer", "citations"]
+  },
+  {
+    "id": "q4",
+    "question": "Why does chunk overlap matter?",
+    "expected_sources": ["chunking.md"],
+    "expected_keywords": ["overlap", "continuity", "context"]
+  },
+  {
+    "id": "q5",
+    "question": "What settings can be configured in the project?",
+    "expected_sources": ["configuration.md"],
+    "expected_keywords": ["chunk size", "embedding", "qdrant", "llm"]
+  },
+  {
+    "id": "q6",
+    "question": "What does the vector store contain?",
+    "expected_sources": ["vector_store.md"],
+    "expected_keywords": ["embedding", "page content", "metadata"]
+  }
+]
