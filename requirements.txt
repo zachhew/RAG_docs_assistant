@@ -4,6 +4,11 @@ pydantic-settings~=2.13.1
 langchain-core~=1.2.20
 langchain-community~=0.4.1
 langchain-text-splitters~=1.1.1
-qdrant-client~=1.17.1
 langchain-openai~=1.1.11
 rank_bm25
+langchain-huggingface
+langchain-qdrant
+qdrant-client~=1.17.1
+sentence-transformers
+transformers
+torch
