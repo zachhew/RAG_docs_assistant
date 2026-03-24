@@ -5,66 +5,121 @@ from app.llm.client import get_llm
 from app.pipeline.prompt_builder import build_prompt
 from app.pipeline.query_rewriter import rewrite_query, should_rewrite_query
 from app.pipeline.response_builder import build_citations
-from app.retrieval.hybrid import hybrid_retrieve_multi
+from app.retrieval.hybrid import hybrid_retrieve, hybrid_retrieve_multi
 from app.retrieval.reranker import rerank_documents
+from app.retrieval.retriever import get_retriever
 
 logger = logging.getLogger(__name__)
 
 
-def run_rag_pipeline(question: str, top_k: int = 5):
+def _dense_retrieve(question: str, top_k: int):
+    retriever = get_retriever(k=max(top_k, settings.retrieval_fetch_k))
+    return retriever.invoke(question)
+
+
+def _hybrid_retrieve(question: str, top_k: int):
+    return hybrid_retrieve(question=question, top_k=top_k)
+
+
+def _maybe_build_retrieval_queries(question: str, use_query_rewriting: bool) -> list[str]:
     retrieval_queries = [question]
 
-    if should_rewrite_query(question):
+    if use_query_rewriting and should_rewrite_query(question):
         rewritten_query = rewrite_query(question)
         if rewritten_query and rewritten_query != question:
             retrieval_queries.append(rewritten_query)
     else:
         logger.info("Skipping query rewriting for question=%r", question)
 
-    logger.info("Retrieval queries=%r", retrieval_queries)
+    return retrieval_queries
 
-    retrieved_documents = hybrid_retrieve_multi(
-        queries=retrieval_queries,
-        top_k=top_k,
+
+def run_rag_pipeline(
+    question: str,
+    top_k: int = 5,
+    mode: str = "hybrid_rerank",
+    use_query_rewriting: bool = False,
+):
+    retrieval_queries = _maybe_build_retrieval_queries(
+        question=question,
+        use_query_rewriting=use_query_rewriting,
     )
 
-    logger.info(
-        "Hybrid retrieved %s unique documents for queries=%r",
-        len(retrieved_documents),
-        retrieval_queries,
-    )
+    logger.info("Pipeline mode=%s | retrieval_queries=%r", mode, retrieval_queries)
 
-    for i, doc in enumerate(retrieved_documents, start=1):
-        preview = " ".join(doc.page_content[:120].split())
-        logger.info(
-            "Before rerank | doc=%s | chunk_id=%s | source=%s | preview=%s",
-            i,
-            doc.metadata.get("chunk_id"),
-            doc.metadata.get("source"),
-            preview,
+    if mode == "dense":
+        documents = _dense_retrieve(question=question, top_k=top_k)
+
+    elif mode == "dense_rerank":
+        retrieved_documents = _dense_retrieve(question=question, top_k=top_k)
+
+        logger.info("Dense retrieved %s documents", len(retrieved_documents))
+        for i, doc in enumerate(retrieved_documents, start=1):
+            preview = " ".join(doc.page_content[:120].split())
+            logger.info(
+                "Before rerank | doc=%s | chunk_id=%s | source=%s | preview=%s",
+                i,
+                doc.metadata.get("chunk_id"),
+                doc.metadata.get("source"),
+                preview,
+            )
+
+        documents = rerank_documents(
+            question=question,
+            documents=retrieved_documents,
+            top_k=top_k,
+            min_score=settings.reranker_min_score,
         )
 
-    documents = rerank_documents(
-        question=question,
-        documents=retrieved_documents,
-        top_k=top_k,
-        min_score=settings.reranker_min_score,
-    )
+    elif mode == "hybrid_rerank":
+        if use_query_rewriting and len(retrieval_queries) > 1:
+            retrieved_documents = hybrid_retrieve_multi(
+                queries=retrieval_queries,
+                top_k=top_k,
+            )
+        else:
+            retrieved_documents = _hybrid_retrieve(question=question, top_k=top_k)
+
+        logger.info(
+            "Hybrid retrieved %s unique documents for queries=%r",
+            len(retrieved_documents),
+            retrieval_queries,
+        )
+
+        for i, doc in enumerate(retrieved_documents, start=1):
+            preview = " ".join(doc.page_content[:120].split())
+            logger.info(
+                "Before rerank | doc=%s | chunk_id=%s | source=%s | preview=%s",
+                i,
+                doc.metadata.get("chunk_id"),
+                doc.metadata.get("source"),
+                preview,
+            )
+
+        documents = rerank_documents(
+            question=question,
+            documents=retrieved_documents,
+            top_k=top_k,
+            min_score=settings.reranker_min_score,
+        )
+
+    else:
+        raise ValueError(f"Unsupported pipeline mode: {mode}")
 
     logger.info(
-        "After rerank and score filtering | kept=%s | min_score=%.3f",
+        "After retrieval/rerank | kept=%s | mode=%s",
         len(documents),
-        settings.reranker_min_score,
+        mode,
     )
 
     for i, doc in enumerate(documents, start=1):
         preview = " ".join(doc.page_content[:120].split())
         logger.info(
-            "After rerank | doc=%s | chunk_id=%s | source=%s | score=%.4f | preview=%s",
+            "Final docs | doc=%s | chunk_id=%s | source=%s | score=%s | preview=%s",
             i,
             doc.metadata.get("chunk_id"),
             doc.metadata.get("source"),
-            doc.metadata.get("score", 0.0),
+            doc.metadata.get("score"),
             preview,
         )
 
