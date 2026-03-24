@@ -1,3 +1,4 @@
+import json
 import logging
 
 from app.core.config import settings
@@ -5,7 +6,7 @@ from app.llm.client import get_llm
 from app.pipeline.prompt_builder import build_prompt
 from app.pipeline.query_rewriter import rewrite_query, should_rewrite_query
 from app.pipeline.response_builder import build_citations
-from app.retrieval.hybrid import hybrid_retrieve, hybrid_retrieve_multi
+from app.retrieval.hybrid import hybrid_retrieve_multi
 from app.retrieval.reranker import rerank_documents
 from app.retrieval.retriever import get_retriever
 
@@ -18,6 +19,7 @@ def _dense_retrieve(question: str, top_k: int):
 
 
 def _hybrid_retrieve(question: str, top_k: int):
+    from app.retrieval.hybrid import hybrid_retrieve
     return hybrid_retrieve(question=question, top_k=top_k)
 
 
@@ -34,7 +36,7 @@ def _maybe_build_retrieval_queries(question: str, use_query_rewriting: bool) -> 
     return retrieval_queries
 
 
-def run_rag_pipeline(
+def _get_documents(
     question: str,
     top_k: int = 5,
     mode: str = "hybrid_rerank",
@@ -106,11 +108,7 @@ def run_rag_pipeline(
     else:
         raise ValueError(f"Unsupported pipeline mode: {mode}")
 
-    logger.info(
-        "After retrieval/rerank | kept=%s | mode=%s",
-        len(documents),
-        mode,
-    )
+    logger.info("After retrieval/rerank | kept=%s | mode=%s", len(documents), mode)
 
     for i, doc in enumerate(documents, start=1):
         preview = " ".join(doc.page_content[:120].split())
@@ -123,6 +121,22 @@ def run_rag_pipeline(
             preview,
         )
 
+    return documents
+
+
+def run_rag_pipeline(
+    question: str,
+    top_k: int = 5,
+    mode: str = "hybrid_rerank",
+    use_query_rewriting: bool = False,
+):
+    documents = _get_documents(
+        question=question,
+        top_k=top_k,
+        mode=mode,
+        use_query_rewriting=use_query_rewriting,
+    )
+
     prompt = build_prompt(question, documents)
 
     llm = get_llm()
@@ -134,3 +148,62 @@ def run_rag_pipeline(
         "answer": response.content,
         "citations": citations,
     }
+
+
+def stream_rag_pipeline(
+    question: str,
+    top_k: int = 5,
+    mode: str = "hybrid_rerank",
+    use_query_rewriting: bool = False,
+):
+    documents = _get_documents(
+        question=question,
+        top_k=top_k,
+        mode=mode,
+        use_query_rewriting=use_query_rewriting,
+    )
+
+    prompt = build_prompt(question, documents)
+    citations = build_citations(documents)
+    llm = get_llm()
+
+    logger.info("Starting streaming response | mode=%s | question=%r", mode, question)
+
+    def event_stream():
+        full_answer_parts = []
+
+        try:
+            for chunk in llm.stream(prompt):
+                text = chunk.content if chunk.content else ""
+                if text:
+                    full_answer_parts.append(text)
+                    payload = {
+                        "type": "token",
+                        "content": text,
+                    }
+                    yield json.dumps(payload, ensure_ascii=False) + "\n"
+
+            full_answer = "".join(full_answer_parts)
+
+            logger.info(
+                "Streaming completed | answer_length=%s | citations=%s",
+                len(full_answer),
+                len(citations),
+            )
+
+            final_payload = {
+                "type": "final",
+                "answer": full_answer,
+                "citations": [citation.model_dump() for citation in citations],
+            }
+            yield json.dumps(final_payload, ensure_ascii=False) + "\n"
+
+        except Exception:
+            logger.exception("Streaming failed for question=%r", question)
+            error_payload = {
+                "type": "error",
+                "message": "Streaming failed",
+            }
+            yield json.dumps(error_payload, ensure_ascii=False) + "\n"
+
+    return event_stream()
