@@ -26,7 +26,9 @@ def contains_expected_keywords(answer: str, expected_keywords: list[str]) -> boo
     return all(keyword.lower() in answer_norm for keyword in expected_keywords)
 
 
-def contains_expected_source(citations: list[dict], expected_sources: list[str]) -> bool:
+def contains_expected_source(
+    citations: list[dict], expected_sources: list[str]
+) -> bool:
     found_sources = {item["source"] for item in citations}
     return any(source in found_sources for source in expected_sources)
 
@@ -59,7 +61,9 @@ def evaluate_mode(mode: str, questions: list[dict], top_k: int = 5):
         ]
 
         source_hit = contains_expected_source(citations, item["expected_sources"])
-        keyword_hit = contains_expected_keywords(result["answer"], item["expected_keywords"])
+        keyword_hit = contains_expected_keywords(
+            result["answer"], item["expected_keywords"]
+        )
 
         judge = judge_answer(
             question=item["question"],
@@ -91,7 +95,9 @@ def summarize(results: list[dict], mode: str):
     avg_relevance = sum(r["judge"]["answer_relevance"] for r in results) / total
     avg_groundedness = sum(r["judge"]["groundedness"] for r in results) / total
     avg_completeness = sum(r["judge"]["completeness"] for r in results) / total
-    hallucination_count = sum(1 for r in results if r["judge"]["hallucination_detected"])
+    hallucination_count = sum(
+        1 for r in results if r["judge"]["hallucination_detected"]
+    )
 
     print(f"\n=== Mode: {mode} ===")
     print(f"Total questions: {total}")

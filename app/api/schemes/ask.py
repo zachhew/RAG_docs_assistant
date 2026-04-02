@@ -2,8 +2,12 @@ from pydantic import BaseModel, Field
 
 
 class AskRequest(BaseModel):
-    question: str = Field(..., min_length=3, description="User question about the documentation")
-    top_k: int = Field(default=5, ge=1, le=20, description="Number of retrieved chunks to use")
+    question: str = Field(
+        ..., min_length=3, description="User question about the documentation"
+    )
+    top_k: int = Field(
+        default=5, ge=1, le=20, description="Number of retrieved chunks to use"
+    )
 
 
 class Citation(BaseModel):
@@ -16,4 +20,6 @@ class Citation(BaseModel):
 
 class AskResponse(BaseModel):
     answer: str = Field(..., description="Generated grounded answer")
-    citations: list[Citation] = Field(default_factory=list, description="Supporting citations")
+    citations: list[Citation] = Field(
+        default_factory=list, description="Supporting citations"
+    )

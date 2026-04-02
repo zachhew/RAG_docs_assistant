@@ -5,7 +5,7 @@ from app.core.logging import setup_logging
 
 setup_logging()
 app = FastAPI(
-    title = "Advanced RAG support",
+    title="Advanced RAG support",
     description="Advanced RAG support",
     version="0.1.0",
 )

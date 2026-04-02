@@ -31,7 +31,9 @@ def run_ingestion(data_dir: str | Path | None = None) -> int:
         logger.info("Sample chunk metadata: %s", sample.metadata)
 
     save_chunks(enriched_chunks)
-    logger.info("Saved processed chunks to %s", data_dir if data_dir else "processed store")
+    logger.info(
+        "Saved processed chunks to %s", data_dir if data_dir else "processed store"
+    )
 
     embeddings = get_embeddings()
     recreate_vector_store(enriched_chunks, embeddings)

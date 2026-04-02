@@ -71,6 +71,7 @@ User question:
     logger.info("Query rewritten | original=%r | rewritten=%r", question, rewritten)
     return rewritten
 
+
 # What metadata does each chunk contain?
 # What does the API response contain?
 # What settings should be stored in configuration?

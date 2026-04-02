@@ -44,7 +44,8 @@ def rerank_documents(
         return scored_docs[:top_k]
 
     filtered_docs = [
-        doc for doc in scored_docs
+        doc
+        for doc in scored_docs
         if doc.metadata.get("score", float("-inf")) >= min_score
     ]
 

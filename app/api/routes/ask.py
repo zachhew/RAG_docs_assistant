@@ -5,6 +5,8 @@ from app.api.schemes.ask import AskRequest, AskResponse
 from app.pipeline.rag_pipeline import run_rag_pipeline, stream_rag_pipeline
 
 router = APIRouter()
+
+
 @router.post("/ask", response_model=AskResponse)
 async def ask_docs(request: AskRequest):
     result = run_rag_pipeline(

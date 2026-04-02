@@ -5,6 +5,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 ENV_FILE = BASE_DIR / ".env"
 
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=ENV_FILE, env_file_encoding="utf-8")
 
@@ -16,7 +17,7 @@ class Settings(BaseSettings):
     qdrant_url: str = "http://localhost:6333"
     collection_name: str = "docs_collection"
 
-    embedding_model_name: str = "sentence-transformers/all-MiniLM-L6-v2" #временно
+    embedding_model_name: str = "sentence-transformers/all-MiniLM-L6-v2"  # временно
     embedding_device: str = "cpu"
 
     llm_base_url: str = "https://openrouter.ai/api/v1"
@@ -27,7 +28,7 @@ class Settings(BaseSettings):
     enable_query_rewriting: bool = False
     query_rewriting_min_words: int = 5
 
-    reranker_model_name: str = "BAAI/bge-reranker-base" #временно?
+    reranker_model_name: str = "BAAI/bge-reranker-base"  # временно?
     reranker_device: str = "cpu"
 
     chunk_size: int = 700

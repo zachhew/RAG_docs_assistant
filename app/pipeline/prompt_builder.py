@@ -10,10 +10,7 @@ def build_prompt(question: str, documents: list[Document]) -> str:
         content = doc.page_content.strip()
 
         context_blocks.append(
-            f"[Document {i}]\n"
-            f"Title: {title}\n"
-            f"Source: {source}\n"
-            f"Content:\n{content}"
+            f"[Document {i}]\nTitle: {title}\nSource: {source}\nContent:\n{content}"
         )
 
     context = "\n\n".join(context_blocks)

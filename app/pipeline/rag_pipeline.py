@@ -20,10 +20,13 @@ def _dense_retrieve(question: str, top_k: int):
 
 def _hybrid_retrieve(question: str, top_k: int):
     from app.retrieval.hybrid import hybrid_retrieve
+
     return hybrid_retrieve(question=question, top_k=top_k)
 
 
-def _maybe_build_retrieval_queries(question: str, use_query_rewriting: bool) -> list[str]:
+def _maybe_build_retrieval_queries(
+    question: str, use_query_rewriting: bool
+) -> list[str]:
     retrieval_queries = [question]
 
     if use_query_rewriting and should_rewrite_query(question):
