@@ -1,4 +1,5 @@
 # Advanced RAG Docs Assistant
+[![CI](https://github.com/zachhew/RAG_docs_assistant/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/zachhew/RAG_docs_assistant/actions/workflows/ci.yml)
 
 Advanced RAG Docs Assistant — это модульная Retrieval-Augmented Generation система для ответов на вопросы по технической документации.
 
